@@ -1,0 +1,11 @@
+{
+  "name": "TaskMaster - Android Nativo",
+  "image": "mcr.microsoft.com/devcontainers/java:1-21-bookworm",
+  "remoteUser": "vscode",
+  "remoteEnv": {
+    "ANDROID_HOME": "/home/vscode/android-sdk",
+    "ANDROID_SDK_ROOT": "/home/vscode/android-sdk",
+    "PATH": "/home/vscode/android-sdk/cmdline-tools/latest/bin:/home/vscode/android-sdk/platform-tools:${containerEnv:PATH}"
+  },
+  "postCreateCommand": "bash .devcontainer/install-android-sdk.sh"
+}

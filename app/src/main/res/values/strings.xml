@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">TaskMaster</string>
+    <string name="mensaje_bienvenida">Bienvenido a TaskMaster</string>
+    <string name="descripcion_logo_android">Logotipo de Android</string>
+</resources>
