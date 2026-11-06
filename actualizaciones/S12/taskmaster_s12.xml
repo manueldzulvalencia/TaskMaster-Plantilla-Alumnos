@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Recursos de ejemplo para la Sesion 12. No reemplaza strings.xml. -->
+<resources>
+    <!-- Categorias del Spinner -->
+    <string-array name="categorias_taskmaster_s12">
+        <item>Estudio</item>
+        <item>Trabajo</item>
+        <item>Personal</item>
+        <item>Otra</item>
+    </string-array>
+
+    <!-- Datos de muestra para visualizar ListView (no son tareas guardadas). -->
+    <string-array name="tareas_ejemplo_taskmaster_s12">
+        <item>Estudiar Kotlin</item>
+        <item>Realizar practica XML</item>
+        <item>Revisar TaskMaster</item>
+    </string-array>
+</resources>

@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  TASKMASTER - SESION 12
+  Proposito: reconocer controles de interfaz Android.
+  Los botones aun NO agregan ni eliminan tareas: su logica se programara despues.
+  Se conserva android:id="@+id/main" para ser compatible con MainActivity.kt.
+-->
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="#F5F8F6">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <!-- 1. TextView: muestra el titulo de la pantalla -->
+        <TextView
+            android:id="@+id/tvTitulo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="16dp"
+            android:gravity="center"
+            android:text="TaskMaster - Nueva tarea"
+            android:textColor="#176B37"
+            android:textSize="23sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/tvNombreEtiqueta"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Nombre de la tarea"
+            android:textColor="#263238"
+            android:textStyle="bold" />
+
+        <!-- 2. EditText: el usuario escribe una tarea -->
+        <EditText
+            android:id="@+id/etNombreTarea"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="14dp"
+            android:hint="Ej. Estudiar Kotlin"
+            android:inputType="textCapSentences"
+            android:maxLines="1" />
+
+        <TextView
+            android:id="@+id/tvPrioridadEtiqueta"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Prioridad"
+            android:textColor="#263238"
+            android:textStyle="bold" />
+
+        <!-- 3 y 4. RadioGroup agrupa los RadioButton: solo una prioridad -->
+        <RadioGroup
+            android:id="@+id/rgPrioridad"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:orientation="horizontal"
+            android:checkedButton="@id/rbMedia">
+
+            <RadioButton
+                android:id="@+id/rbAlta"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Alta" />
+
+            <RadioButton
+                android:id="@+id/rbMedia"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Media" />
+
+            <RadioButton
+                android:id="@+id/rbBaja"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Baja" />
+        </RadioGroup>
+
+        <!-- 5. CheckBox: opcion independiente -->
+        <CheckBox
+            android:id="@+id/cbRecordatorio"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            android:text="Activar recordatorio" />
+
+        <TextView
+            android:id="@+id/tvCategoriaEtiqueta"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Categoria"
+            android:textColor="#263238"
+            android:textStyle="bold" />
+
+        <!-- 6. Spinner: opciones definidas en res/values/taskmaster_s12.xml -->
+        <Spinner
+            android:id="@+id/spCategoria"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginBottom="16dp"
+            android:entries="@array/categorias_taskmaster_s12" />
+
+        <!-- 7. Button: la accion se programara en una sesion posterior -->
+        <Button
+            android:id="@+id/btnAgregarTarea"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp"
+            android:text="Agregar tarea" />
+
+        <TextView
+            android:id="@+id/tvListaEtiqueta"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="6dp"
+            android:text="Mis tareas (ejemplos)"
+            android:textColor="#263238"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <!-- 8. ListView: por ahora muestra elementos fijos de ejemplo -->
+        <ListView
+            android:id="@+id/lvTareas"
+            android:layout_width="match_parent"
+            android:layout_height="140dp"
+            android:layout_marginBottom="10dp"
+            android:entries="@array/tareas_ejemplo_taskmaster_s12" />
+
+        <!-- 9. ImageButton: boton con icono, aun sin accion programada -->
+        <ImageButton
+            android:id="@+id/ibEliminarEjemplo"
+            android:layout_width="56dp"
+            android:layout_height="48dp"
+            android:layout_gravity="end"
+            android:contentDescription="Eliminar tarea (ejemplo sin accion)"
+            android:src="@android:drawable/ic_menu_delete" />
+
+        <TextView
+            android:id="@+id/tvNota"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:gravity="center"
+            android:text="S12: interfaz visual. Las acciones y el registro de tareas se programaran en S13."
+            android:textColor="#52635A"
+            android:textSize="12sp" />
+    </LinearLayout>
+</ScrollView>
