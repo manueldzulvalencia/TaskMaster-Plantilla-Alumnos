@@ -2,7 +2,6 @@
 """Aplica la práctica S13 encima de un proyecto individual que ya tiene S12."""
 from pathlib import Path
 import re
-import shutil
 import sys
 
 folder = Path(__file__).resolve().parent
@@ -45,7 +44,7 @@ try:
     backup_dir.mkdir(parents=True, exist_ok=True)
     backup = backup_dir / "MainActivity.kt.bak"
     if not backup.exists():
-        shutil.copy2(main, backup)
+        backup.write_bytes(main.read_bytes())
 
     if "configurarTaskMasterS13()" not in original:
         modified = re.sub(pattern, r'\1\n        configurarTaskMasterS13()', original, count=1)
