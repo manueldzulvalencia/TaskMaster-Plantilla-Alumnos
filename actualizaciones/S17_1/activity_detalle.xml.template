@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#F7F8FE"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="22dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="22dp"
+            android:background="@drawable/tm171_header">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="TASKMASTER  ·  S17.1"
+                android:textColor="#E7DDFB"
+                android:textSize="13sp"
+                android:letterSpacing="0.07"
+                android:textStyle="bold" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="Detalle de tarea"
+                android:textColor="#FFFFFF"
+                android:textStyle="bold"
+                android:textSize="28sp" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="Consulta la información de la tarea seleccionada."
+                android:textColor="#E4D9F6"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="INFORMACIÓN DE LA TAREA"
+            android:textColor="#676482"
+            android:textStyle="bold"
+            android:letterSpacing="0.07"
+            android:textSize="12sp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:padding="22dp"
+            android:orientation="vertical"
+            android:background="@drawable/tm171_card"
+            android:elevation="3dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="●  TAREA SELECCIONADA"
+                android:textColor="#6C28D9"
+                android:textStyle="bold"
+                android:textSize="12sp" />
+            <TextView
+                android:id="@+id/tvDetalleTarea"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="18dp"
+                android:text="Información de la tarea"
+                android:textColor="#1D2245"
+                android:textStyle="bold"
+                android:textSize="20sp" />
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="1dp"
+                android:layout_marginTop="20dp"
+                android:background="#EAE6F4" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="14dp"
+                android:text="Los cambios se gestionan desde la lista principal."
+                android:textColor="#686783"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btnVolverTareas"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="26dp"
+            android:minHeight="54dp"
+            android:text="←  Volver a mis tareas"
+            android:textAllCaps="false"
+            android:textColor="#FFFFFF"
+            android:textStyle="bold"
+            android:background="@drawable/tm171_button" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:gravity="center"
+            android:text="Diseño visual S17.1  ·  Navegación S17"
+            android:textColor="#8B89A2"
+            android:textSize="12sp" />
+    </LinearLayout>
+</ScrollView>

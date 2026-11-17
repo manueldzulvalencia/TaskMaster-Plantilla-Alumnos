@@ -1,0 +1,92 @@
+package __PACKAGE__
+
+import android.app.Activity
+import android.content.res.ColorStateList
+import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
+import android.view.View
+import android.widget.Button
+import android.widget.CheckBox
+import android.widget.EditText
+import android.widget.ImageButton
+import android.widget.ListView
+import android.widget.RadioButton
+import android.widget.Spinner
+import android.widget.TextView
+
+/**
+ * S17.1: capa visual sobre S17. Conserva los listeners, Toast, tareas e Intents.
+ * No recrea adaptadores ni cambia los datos de las tareas.
+ */
+fun Activity.configurarTaskMasterS171() {
+    configurarTaskMasterS17()
+    aplicarDisenoTaskMasterS171()
+}
+
+private fun Activity.aplicarDisenoTaskMasterS171() {
+    val fondo = Color.rgb(247, 248, 254)
+    val tinta = Color.rgb(29, 34, 69)
+    val secundario = Color.rgb(102, 105, 132)
+    val morado = Color.rgb(108, 40, 217)
+    val verde = Color.rgb(102, 181, 43)
+
+    // Fondo y encabezados: no se alteran las posiciones establecidas en S12.
+    findViewById<View>(android.R.id.content)?.setBackgroundColor(fondo)
+    findViewById<TextView>(R.id.tvListaEtiqueta)?.apply {
+        text = "Mis tareas  ·  TaskMaster"
+        setTextColor(tinta)
+        textSize = 20f
+        setTypeface(typeface, android.graphics.Typeface.BOLD)
+    }
+    findViewById<TextView>(R.id.tvNota)?.apply {
+        text = "S17.1  •  Selecciona una tarea para consultar sus detalles"
+        setTextColor(secundario)
+        textSize = 13f
+    }
+
+    findViewById<EditText>(R.id.etNombreTarea)?.apply {
+        setTextColor(tinta)
+        setHintTextColor(secundario)
+        backgroundTintList = ColorStateList.valueOf(morado)
+        setPadding(dp171(14), paddingTop, dp171(14), paddingBottom)
+    }
+    findViewById<Button>(R.id.btnAgregarTarea)?.apply {
+        text = "+  AGREGAR TAREA"
+        isAllCaps = false
+        setTextColor(Color.WHITE)
+        backgroundTintList = ColorStateList.valueOf(morado)
+        setTypeface(typeface, android.graphics.Typeface.BOLD)
+        elevation = dp171(3).toFloat()
+    }
+
+    findViewById<ListView>(R.id.lvTareas)?.apply {
+        background = tarjeta171(Color.WHITE, 18f, Color.rgb(227, 223, 242))
+        divider = android.graphics.drawable.ColorDrawable(Color.rgb(235, 230, 246))
+        dividerHeight = dp171(1)
+        setPadding(dp171(10), dp171(8), dp171(10), dp171(8))
+        clipToPadding = false
+        elevation = dp171(3).toFloat()
+    }
+
+    findViewById<Spinner>(R.id.spCategoria)?.backgroundTintList = ColorStateList.valueOf(morado)
+    findViewById<CheckBox>(R.id.cbRecordatorio)?.buttonTintList = ColorStateList.valueOf(morado)
+    for (id in intArrayOf(R.id.rbAlta, R.id.rbMedia, R.id.rbBaja)) {
+        findViewById<RadioButton>(id)?.buttonTintList = ColorStateList.valueOf(verde)
+    }
+    findViewById<ImageButton>(R.id.ibEliminarEjemplo)?.apply {
+        background = tarjeta171(Color.rgb(254, 240, 244), 14f, Color.rgb(245, 206, 217))
+        imageTintList = ColorStateList.valueOf(Color.rgb(184, 43, 82))
+        setPadding(dp171(9), dp171(9), dp171(9), dp171(9))
+    }
+}
+
+private fun Activity.dp171(value: Int): Int =
+    (value * resources.displayMetrics.density + 0.5f).toInt()
+
+private fun Activity.tarjeta171(color: Int, radioDp: Float, borde: Int): GradientDrawable =
+    GradientDrawable().apply {
+        shape = GradientDrawable.RECTANGLE
+        setColor(color)
+        cornerRadius = radioDp * resources.displayMetrics.density
+        setStroke(dp171(1), borde)
+    }
