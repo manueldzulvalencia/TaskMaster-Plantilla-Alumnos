@@ -1,0 +1,21 @@
+package __PACKAGE__
+
+import android.app.Activity
+import android.os.Bundle
+import android.widget.TextView
+
+/** S17: pantalla de detalle. La tarea proviene del Intent de MainActivity. */
+class DetalleActivity : Activity() {
+    companion object {
+        const val EXTRA_TAREA = "mx.tecnm.taskmaster.TAREA"
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_detalle)
+        val descripcion = intent.getStringExtra(EXTRA_TAREA)
+        findViewById<TextView>(R.id.tvDetalleTarea).text =
+            descripcion?.takeIf { it.isNotBlank() } ?: "No se recibió información de la tarea"
+        findViewById<android.widget.Button>(R.id.btnVolverTareas).setOnClickListener { finish() }
+    }
+}
