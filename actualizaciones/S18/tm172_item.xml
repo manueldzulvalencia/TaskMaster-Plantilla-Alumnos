@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:orientation="vertical" android:padding="12dp"
+    android:background="@drawable/tm172_card">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal" android:gravity="center_vertical">
+        <TextView android:layout_width="38dp" android:layout_height="42dp"
+            android:gravity="center" android:text="☑" android:textSize="24sp"
+            android:textColor="#7425C7"/>
+        <LinearLayout android:layout_width="0dp" android:layout_weight="1"
+            android:layout_height="wrap_content" android:orientation="vertical">
+            <TextView android:id="@+id/tm172Title" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:textSize="16sp"
+                android:textStyle="bold" android:textColor="#17233C"/>
+            <TextView android:id="@+id/tm172Subtitle" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginTop="3dp"
+                android:textSize="12sp" android:textColor="#645A76"/>
+        </LinearLayout>
+        <TextView android:id="@+id/tm172Flag" android:layout_width="34dp"
+            android:layout_height="wrap_content" android:gravity="center"
+            android:text="🟠" android:textSize="18sp"/>
+    </LinearLayout>
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="horizontal" android:layout_marginTop="8dp">
+        <Button android:id="@+id/tm181VerDetalle"
+            android:layout_width="0dp" android:layout_weight="1"
+            android:layout_height="48dp" android:text="Ver detalle"
+            android:textAllCaps="false" android:textColor="#FFFFFF"
+            android:backgroundTint="#6922B7" android:focusable="false"/>
+        <Button android:id="@+id/tm181Eliminar"
+            android:layout_width="0dp" android:layout_weight="1"
+            android:layout_height="48dp" android:layout_marginStart="8dp"
+            android:text="Eliminar" android:textAllCaps="false"
+            android:textColor="#FFFFFF" android:backgroundTint="#B33A59"
+            android:focusable="false"/>
+    </LinearLayout>
+</LinearLayout>

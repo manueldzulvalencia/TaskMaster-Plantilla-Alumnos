@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:fillViewport="true" android:background="#F5F3FA">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:paddingBottom="30dp">
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:padding="24dp"
+            android:background="@drawable/tm172_header">
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="TASKMASTER" android:textSize="13sp"
+                android:textStyle="bold" android:textColor="#EADCFD"/>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="12dp" android:text="Detalle de tarea"
+                android:textColor="#FFFFFF" android:textSize="30sp" android:textStyle="bold"/>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="5dp" android:text="Consulta la información de tu tarea seleccionada"
+                android:textColor="#F1E6FF" android:textSize="14sp"/>
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="vertical" android:layout_margin="18dp" android:padding="20dp"
+            android:background="@drawable/tm172_card" android:elevation="3dp">
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="INFORMACIÓN DE LA TAREA" android:textStyle="bold"
+                android:textSize="14sp" android:textColor="#7134BD"/>
+            <TextView android:id="@+id/tvDetalleTarea"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="18dp" android:text="Información de la tarea"
+                android:textColor="#17233C" android:textSize="20sp" android:textStyle="bold"/>
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:layout_marginTop="14dp" android:text="Las modificaciones se realizan desde la lista principal."
+                android:textSize="13sp" android:textColor="#645A76"/>
+        </LinearLayout>
+        <Button android:id="@+id/btnVolverTareas" android:layout_width="match_parent"
+            android:layout_height="54dp" android:layout_margin="18dp"
+            android:backgroundTint="#6B21B4" android:textColor="#FFFFFF"
+            android:textStyle="bold" android:text="← VOLVER A MIS TAREAS"/>
+    </LinearLayout>
+</ScrollView>
