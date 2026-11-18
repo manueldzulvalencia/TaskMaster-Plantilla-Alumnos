@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="#F5F3FA">
+    <LinearLayout
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:paddingBottom="24dp">
+        <LinearLayout
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:padding="20dp" android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/tm172_header">
+            <TextView android:layout_width="48dp" android:layout_height="48dp"
+                android:gravity="center" android:text="✓" android:textSize="30sp"
+                android:textColor="#FFFFFF"/>
+            <LinearLayout android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="wrap_content" android:orientation="vertical">
+                <TextView android:id="@+id/tvTitulo" android:layout_width="match_parent"
+                    android:layout_height="wrap_content" android:text="TaskMaster"
+                    android:textColor="#FFFFFF" android:textSize="26sp" android:textStyle="bold"/>
+                <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:text="Organiza tus pendientes" android:textColor="#EADCFD" android:textSize="13sp"/>
+            </LinearLayout>
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_margin="16dp" android:padding="16dp" android:orientation="vertical"
+            android:background="@drawable/tm172_card" android:elevation="3dp">
+            <TextView android:id="@+id/tvNombreEtiqueta" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:text="Nueva tarea"
+                android:textColor="#17233C" android:textStyle="bold" android:textSize="18sp"/>
+            <EditText android:id="@+id/etNombreTarea" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginTop="5dp"
+                android:backgroundTint="#7434CC" android:hint="Escribe el nombre de la tarea..."
+                android:inputType="textCapSentences" android:maxLines="1" android:textColor="#17233C"/>
+            <TextView android:id="@+id/tvPrioridadEtiqueta" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginTop="10dp"
+                android:text="Prioridad" android:textStyle="bold" android:textColor="#17233C"/>
+            <RadioGroup android:id="@+id/rgPrioridad" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:orientation="horizontal"
+                android:checkedButton="@id/rbMedia">
+                <RadioButton android:id="@+id/rbAlta" android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" android:text="Alta"
+                    android:textColor="#17233C" android:buttonTint="#7C29CF"/>
+                <RadioButton android:id="@+id/rbMedia" android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" android:text="Media"
+                    android:textColor="#17233C" android:buttonTint="#7C29CF"/>
+                <RadioButton android:id="@+id/rbBaja" android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" android:text="Baja"
+                    android:textColor="#17233C" android:buttonTint="#7C29CF"/>
+            </RadioGroup>
+            <TextView android:id="@+id/tvCategoriaEtiqueta" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:layout_marginTop="6dp"
+                android:text="Categoría" android:textColor="#17233C" android:textStyle="bold"/>
+            <Spinner android:id="@+id/spCategoria" android:layout_width="match_parent"
+                android:layout_height="44dp" android:entries="@array/categorias_taskmaster_s12"/>
+            <CheckBox android:id="@+id/cbRecordatorio" android:layout_width="match_parent"
+                android:layout_height="wrap_content" android:text="Marcar como importante"
+                android:textColor="#17233C" android:buttonTint="#7C29CF"/>
+            <Button android:id="@+id/btnAgregarTarea" android:layout_width="match_parent"
+                android:layout_height="52dp" android:layout_marginTop="6dp"
+                android:backgroundTint="#6B21B4" android:textColor="#FFFFFF"
+                android:text="+ AGREGAR TAREA" android:textStyle="bold"/>
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:paddingLeft="18dp" android:paddingRight="18dp"
+            android:orientation="horizontal" android:gravity="center_vertical">
+            <TextView android:id="@+id/tvListaEtiqueta" android:layout_width="0dp"
+                android:layout_weight="1" android:layout_height="wrap_content"
+                android:text="Mis tareas" android:textColor="#17233C"
+                android:textStyle="bold" android:textSize="21sp"/>
+            <ImageButton android:id="@+id/ibEliminarEjemplo" android:layout_width="48dp"
+                android:layout_height="48dp" android:background="@drawable/tm172_button"
+                android:contentDescription="Eliminar tarea seleccionada"
+                android:src="@android:drawable/ic_menu_delete" android:tint="#FFFFFF"/>
+        </LinearLayout>
+        <ListView android:id="@+id/lvTareas" android:layout_width="match_parent"
+            android:layout_height="250dp" android:layout_marginLeft="16dp"
+            android:layout_marginRight="16dp" android:layout_marginTop="6dp"
+            android:divider="@android:color/transparent" android:dividerHeight="8dp"
+            android:background="@android:color/transparent"/>
+        <TextView android:id="@+id/tvNota" android:layout_width="match_parent"
+            android:layout_height="wrap_content" android:layout_margin="16dp"
+            android:gravity="center" android:textColor="#645A76"
+            android:textSize="12sp" android:text="Toca una tarea para ver sus detalles."/>
+    </LinearLayout>
+</ScrollView>
