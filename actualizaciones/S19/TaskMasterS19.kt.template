@@ -1,0 +1,187 @@
+package com.itcancun.mjdzul.taskmaster
+
+import android.app.Activity
+import android.app.AlertDialog
+import android.content.Context
+import org.json.JSONArray
+import java.io.FileNotFoundException
+import android.content.Intent
+import android.widget.ArrayAdapter
+import android.widget.Button
+import android.widget.CheckBox
+import android.widget.EditText
+import android.widget.ListView
+import android.widget.ScrollView
+import android.widget.RadioGroup
+import android.widget.Spinner
+import android.widget.TextView
+import android.widget.Toast
+import android.view.View
+import android.view.ViewGroup
+
+/**
+ * Sesión 17: navegación por Activities manteniendo los Toast de S16.
+ * Se invoca UNA SOLA VEZ desde MainActivity.onCreate(), después de setContentView().
+ * Conserva XML de S12 y toda la lógica de S14; reemplaza solo la configuración de eventos.
+ * S19: las tareas se guardan y recuperan mediante almacenamiento interno privado.
+ */
+fun Activity.configurarTaskMasterS19() {
+    // 1. Obtener los controles que ya existen en activity_main.xml (S12).
+    val campoTarea = findViewById<EditText>(R.id.etNombreTarea)
+    val botonAgregar = findViewById<Button>(R.id.btnAgregarTarea)
+    val listaVisual = findViewById<ListView>(R.id.lvTareas)
+    val grupoPrioridad = findViewById<RadioGroup>(R.id.rgPrioridad)
+    val categoria = findViewById<Spinner>(R.id.spCategoria)
+    val importante = findViewById<CheckBox>(R.id.cbRecordatorio)
+    val tituloLista = findViewById<TextView>(R.id.tvListaEtiqueta)
+    val nota = findViewById<TextView>(R.id.tvNota)
+
+    // 2. Conservar las tareas de ejemplo y preparar la lista visible.
+    val tareas = cargarTareasS19(
+        resources.getStringArray(R.array.tareas_ejemplo_taskmaster_s12).toList()
+    )
+    lateinit var ajustarAlturaLista: (Boolean) -> Unit
+    val adaptador = object : ArrayAdapter<String>(
+        this, R.layout.tm172_item, R.id.tm172Title, tareas
+    ) {
+        override fun getView(position: Int, convertView: View?, parent: ViewGroup): View {
+            val vista = super.getView(position, convertView, parent)
+            val contenido = getItem(position).orEmpty()
+            val partes = contenido.split(" | ")
+            val titulo = partes.firstOrNull().orEmpty().removePrefix("★ ").trim()
+            val detalle = if (partes.size > 1) partes.drop(1).joinToString(" · ") else "Tarea pendiente"
+            vista.findViewById<TextView>(R.id.tm172Title).text = titulo
+            vista.findViewById<TextView>(R.id.tm172Subtitle).text =
+                (if (contenido.startsWith("★ ")) "★ Importante · " else "") + detalle
+            vista.findViewById<TextView>(R.id.tm172Flag).text = when {
+                contenido.contains("Prioridad: Alta") -> "🔴"
+                contenido.contains("Prioridad: Baja") -> "🟢"
+                else -> "🟠"
+            }
+            vista.findViewById<Button>(R.id.tm181VerDetalle).setOnClickListener {
+                val navegar = Intent(this@configurarTaskMasterS19, DetalleActivity::class.java)
+                navegar.putExtra(DetalleActivity.EXTRA_TAREA, contenido)
+                startActivity(navegar)
+            }
+            vista.findViewById<Button>(R.id.tm181Eliminar).setOnClickListener {
+                // La tarea se identifica por su valor en el momento de confirmar.
+                AlertDialog.Builder(this@configurarTaskMasterS19)
+                    .setTitle("¿Eliminar tarea?")
+                    .setMessage("¿Deseas eliminar «$titulo»? Esta acción no se puede deshacer.")
+                    .setNegativeButton("Cancelar", null)
+                    .setPositiveButton("Eliminar") { _, _ ->
+                        val indice = if (position in tareas.indices && tareas[position] == contenido) {
+                            position
+                        } else {
+                            tareas.indexOf(contenido)
+                        }
+                        if (indice >= 0) {
+                            tareas.removeAt(indice)
+                            guardarTareasS19(tareas)
+                            notifyDataSetChanged()
+                            ajustarAlturaLista(false)
+                            Toast.makeText(this@configurarTaskMasterS19,
+                                "Tarea eliminada correctamente", Toast.LENGTH_SHORT).show()
+                        }
+                    }.show()
+            }
+            return vista
+        }
+    }
+
+    // DAMN-S18.1: el ScrollView padre desplaza todas las tarjetas; ListView ajusta su altura.
+    ajustarAlturaLista = { desplazarAlFinal ->
+        listaVisual.post {
+            val ancho = listaVisual.width - listaVisual.paddingLeft - listaVisual.paddingRight
+            if (ancho <= 0) return@post
+            var alto = listaVisual.paddingTop + listaVisual.paddingBottom
+            for (indice in 0 until adaptador.count) {
+                val fila = adaptador.getView(indice, null, listaVisual)
+                fila.measure(
+                    View.MeasureSpec.makeMeasureSpec(ancho, View.MeasureSpec.EXACTLY),
+                    View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+                )
+                alto += fila.measuredHeight
+            }
+            if (adaptador.count > 1) alto += listaVisual.dividerHeight * (adaptador.count - 1)
+            val requerido = alto.coerceAtLeast(1)
+            if (listaVisual.layoutParams.height != requerido) {
+                listaVisual.layoutParams = listaVisual.layoutParams.apply { height = requerido }
+            }
+            if (desplazarAlFinal) {
+                val contenedor = findViewById<ScrollView>(R.id.main)
+                contenedor.post { contenedor.fullScroll(View.FOCUS_DOWN) }
+            }
+        }
+    }
+    listaVisual.adapter = adaptador
+    listaVisual.isNestedScrollingEnabled = false
+    tituloLista.text = "Mis tareas"
+    nota.text = "Usa Ver detalle o Eliminar en cada tarjeta."
+    ajustarAlturaLista(false)
+
+    // 4. Leer, validar y registrar tareas con sus opciones (Toast de error o éxito).
+    botonAgregar.setOnClickListener {
+        val nombre = campoTarea.text.toString().trim()
+        if (nombre.isBlank()) {
+            campoTarea.error = "Escribe el nombre de la tarea"
+            Toast.makeText(this, "Ingresa el nombre de la tarea", Toast.LENGTH_SHORT).show()
+        } else {
+            val prioridad = when (grupoPrioridad.checkedRadioButtonId) {
+                R.id.rbAlta -> "Alta"
+                R.id.rbBaja -> "Baja"
+                else -> "Media"
+            }
+            val tipo = categoria.selectedItem?.toString() ?: "Otra"
+            val marca = if (importante.isChecked) "★ " else ""
+            val descripcion = "$marca$nombre | $tipo | Prioridad: $prioridad"
+
+            tareas.add(descripcion)
+            guardarTareasS19(tareas)
+            adaptador.notifyDataSetChanged()
+            ajustarAlturaLista(true)
+
+            campoTarea.text.clear()
+            grupoPrioridad.check(R.id.rbMedia)
+            categoria.setSelection(0)
+            importante.isChecked = false
+            Toast.makeText(this, "Tarea agregada correctamente", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+}
+
+
+/** S19: lee las tareas desde el almacenamiento privado. Solo inicializa ejemplos si NO existe archivo. */
+private fun Activity.cargarTareasS19(ejemplos: List<String>): MutableList<String> {
+    val archivo = getFileStreamPath("tareas.json")
+    if (!archivo.exists()) {
+        val nuevas = ejemplos.toMutableList()
+        guardarTareasS19(nuevas)
+        return nuevas
+    }
+    return try {
+        val texto = openFileInput("tareas.json").bufferedReader(Charsets.UTF_8).use { it.readText() }
+        val json = JSONArray(texto)
+        MutableList(json.length()) { indice -> json.getString(indice) }
+    } catch (error: Exception) {
+        android.util.Log.e("TaskMasterS19", "No fue posible recuperar tareas.json", error)
+        Toast.makeText(this, "No se pudieron recuperar las tareas. Revisa el archivo.", Toast.LENGTH_LONG).show()
+        mutableListOf()
+    }
+}
+
+/** S19: escribe la lista completa como arreglo JSON después de cada alta o eliminación. */
+private fun Activity.guardarTareasS19(tareas: List<String>) {
+    try {
+        val datos = JSONArray()
+        tareas.forEach { datos.put(it) }
+        openFileOutput("tareas.json", Context.MODE_PRIVATE).bufferedWriter(Charsets.UTF_8).use {
+            it.write(datos.toString(2))
+        }
+        android.util.Log.d("TaskMasterS19", "Guardadas ${tareas.size} tareas en tareas.json")
+    } catch (error: Exception) {
+        android.util.Log.e("TaskMasterS19", "No fue posible guardar tareas.json", error)
+        Toast.makeText(this, "Error al guardar tareas en memoria interna", Toast.LENGTH_LONG).show()
+    }
+}

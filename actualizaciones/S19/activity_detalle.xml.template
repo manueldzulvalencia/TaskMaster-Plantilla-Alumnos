@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true"
+    android:background="#F8F7FC">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:paddingBottom="26dp">
+
+        <!-- Encabezado morado inspirado en la portada de S17 -->
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:orientation="horizontal" android:gravity="center_vertical"
+            android:paddingLeft="20dp" android:paddingRight="20dp"
+            android:paddingTop="21dp" android:paddingBottom="21dp"
+            android:background="@drawable/tm172_header">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="‹" android:textSize="32sp" android:textStyle="bold"
+                android:textColor="#FFFFFF" android:layout_marginEnd="14dp" />
+            <TextView android:layout_width="0dp" android:layout_weight="1"
+                android:layout_height="wrap_content" android:text="TaskMaster"
+                android:textColor="#FFFFFF" android:textSize="22sp" android:textStyle="bold"/>
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="⋮" android:textColor="#FFFFFF" android:textSize="24sp" />
+        </LinearLayout>
+
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:paddingLeft="20dp" android:paddingRight="20dp"
+            android:paddingTop="25dp" android:orientation="vertical">
+
+            <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:text="▤  Detalle de tarea" android:textSize="23sp"
+                android:textStyle="bold" android:textColor="#15182B"
+                android:layout_marginBottom="17dp" />
+
+            <!-- Tarjeta principal: nombre y categoría, como en la portada -->
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:padding="17dp"
+                android:background="@drawable/tm18_detalle_tarjeta"
+                android:elevation="2dp">
+                <TextView android:id="@+id/tvDetalleTarea"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:text="Estudiar Kotlin" android:textStyle="bold"
+                    android:textColor="#1D1833" android:textSize="20sp" />
+                <TextView android:id="@+id/tvDetalleCategoriaResumen"
+                    android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp" android:text="Programación"
+                    android:textSize="16sp" android:textColor="#332F43" />
+            </LinearLayout>
+
+            <!-- Metadatos en su propia tarjeta -->
+            <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:orientation="vertical" android:padding="17dp"
+                android:layout_marginTop="14dp" android:background="@drawable/tm172_card"
+                android:elevation="2dp">
+
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="horizontal" android:gravity="center_vertical"
+                    android:paddingTop="4dp" android:paddingBottom="11dp">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="⚑  Prioridad: " android:textSize="16sp"
+                        android:textColor="#252139" />
+                    <TextView android:id="@+id/tvDetallePrioridad"
+                        android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:paddingLeft="10dp" android:paddingRight="10dp"
+                        android:paddingTop="5dp" android:paddingBottom="5dp"
+                        android:background="@drawable/tm18_etiqueta_alta"
+                        android:text="Alta" android:textSize="15sp"
+                        android:textStyle="bold" android:textColor="#C11936" />
+                </LinearLayout>
+
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="horizontal" android:gravity="center_vertical"
+                    android:paddingTop="5dp" android:paddingBottom="11dp">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="◇  Categoría: " android:textSize="16sp"
+                        android:textColor="#252139" />
+                    <TextView android:id="@+id/tvDetalleCategoria"
+                        android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:paddingLeft="10dp" android:paddingRight="10dp"
+                        android:paddingTop="5dp" android:paddingBottom="5dp"
+                        android:background="@drawable/tm18_etiqueta_categoria"
+                        android:text="Desarrollo" android:textSize="15sp"
+                        android:textStyle="bold" android:textColor="#6224D5" />
+                </LinearLayout>
+
+                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+                    android:orientation="horizontal" android:gravity="center_vertical"
+                    android:paddingTop="5dp" android:paddingBottom="4dp">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="☆  Importante: " android:textSize="16sp"
+                        android:textColor="#252139" />
+                    <TextView android:id="@+id/tvDetalleImportante"
+                        android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:paddingLeft="10dp" android:paddingRight="10dp"
+                        android:paddingTop="5dp" android:paddingBottom="5dp"
+                        android:background="@drawable/tm18_etiqueta_si"
+                        android:text="Sí" android:textSize="15sp"
+                        android:textStyle="bold" android:textColor="#177340" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <Button android:id="@+id/btnVolverTareas"
+                android:layout_width="match_parent" android:layout_height="54dp"
+                android:layout_marginTop="22dp" android:text="←  Volver a mis tareas"
+                android:textAllCaps="false" android:textSize="16sp"
+                android:textStyle="bold" android:textColor="#FFFFFF"
+                android:background="@drawable/tm172_button" />
+        </LinearLayout>
+    </LinearLayout>
+</ScrollView>

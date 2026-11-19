@@ -1,0 +1,44 @@
+package com.itcancun.mjdzul.taskmaster
+
+import android.app.Activity
+import android.graphics.Color
+import android.graphics.drawable.GradientDrawable
+import android.widget.TextView
+
+/** Presenta los datos recibidos desde MainActivity como en la portada S17 (S19). */
+fun Activity.configurarDetalleVisualS19() {
+    val raw = intent.getStringExtra(DetalleActivity.EXTRA_TAREA).orEmpty().trim()
+    val importante = raw.startsWith("★ ")
+    val partes = raw.removePrefix("★ ").split(" | ")
+    val titulo = partes.firstOrNull()?.trim().orEmpty().ifBlank { "Tarea sin nombre" }
+    val categoria = partes.getOrNull(1)?.trim().orEmpty().ifBlank { "Sin categoría" }
+    val prioridad = Regex("Prioridad:\\s*(Alta|Media|Baja)", RegexOption.IGNORE_CASE)
+        .find(raw)?.groupValues?.get(1)?.replaceFirstChar { it.uppercase() } ?: "Media"
+
+    findViewById<TextView>(R.id.tvDetalleTarea).text = titulo
+    findViewById<TextView>(R.id.tvDetalleCategoriaResumen).text = categoria
+    findViewById<TextView>(R.id.tvDetalleCategoria).text = categoria
+    val vistaPrioridad = findViewById<TextView>(R.id.tvDetallePrioridad)
+    vistaPrioridad.text = prioridad
+    val (fondoPrioridad, textoPrioridad) = when (prioridad.lowercase()) {
+        "alta" -> 0xFFFFD9DE.toInt() to 0xFFC11936.toInt()
+        "baja" -> 0xFFD8F7E2.toInt() to 0xFF167243.toInt()
+        else -> 0xFFFFE8BD.toInt() to 0xFF915C00.toInt()
+    }
+    vistaPrioridad.setTextColor(textoPrioridad)
+    vistaPrioridad.background = GradientDrawable().apply {
+        shape = GradientDrawable.RECTANGLE
+        cornerRadius = 13f * resources.displayMetrics.density
+        setColor(fondoPrioridad)
+    }
+    val vistaImportante = findViewById<TextView>(R.id.tvDetalleImportante)
+    vistaImportante.text = if (importante) "Sí" else "No"
+    if (!importante) {
+        vistaImportante.setTextColor(0xFF5E6171.toInt())
+        vistaImportante.background = GradientDrawable().apply {
+            shape = GradientDrawable.RECTANGLE
+            cornerRadius = 13f * resources.displayMetrics.density
+            setColor(0xFFE9EAF0.toInt())
+        }
+    }
+}
