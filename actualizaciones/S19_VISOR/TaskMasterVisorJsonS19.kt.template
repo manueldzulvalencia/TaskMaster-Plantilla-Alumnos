@@ -1,0 +1,53 @@
+package com.itcancun.mjdzul.taskmaster
+
+import android.app.Activity
+import android.app.AlertDialog
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.graphics.Typeface
+import android.widget.Button
+import android.widget.ScrollView
+import android.widget.TextView
+import android.widget.Toast
+import org.json.JSONArray
+
+/** Herramienta didáctica S19: muestra el archivo REAL guardado por TaskMaster. */
+fun Activity.configurarVisorJsonS19() {
+    val boton = findViewById<Button>(R.id.btnVerJsonS19) ?: return
+    boton.setOnClickListener {
+        val texto = try {
+            if (!getFileStreamPath("tareas.json").exists()) {
+                "El archivo tareas.json todavía no existe. Agrega una tarea y vuelve a intentarlo."
+            } else {
+                val original = openFileInput("tareas.json")
+                    .bufferedReader(Charsets.UTF_8).use { it.readText() }
+                // Mostrar JSON formateado sin cambiar ni reescribir el archivo.
+                JSONArray(original).toString(2)
+            }
+        } catch (error: Exception) {
+            android.util.Log.e("TaskMasterS19", "Error al leer JSON para visor", error)
+            "No se pudo leer tareas.json: ${error.message ?: "error desconocido"}"
+        }
+
+        val margen = (16 * resources.displayMetrics.density).toInt()
+        val contenido = TextView(this).apply {
+            this.text = texto
+            textSize = 13f
+            setTextIsSelectable(true)
+            typeface = Typeface.MONOSPACE
+            setPadding(margen, margen, margen, margen)
+        }
+        val scroll = ScrollView(this).apply { addView(contenido) }
+        AlertDialog.Builder(this)
+            .setTitle("tareas.json · Almacenamiento interno")
+            .setView(scroll)
+            .setNegativeButton("Cerrar", null)
+            .setPositiveButton("Copiar JSON") { _, _ ->
+                val portapapeles = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                portapapeles.setPrimaryClip(ClipData.newPlainText("tareas.json", texto))
+                Toast.makeText(this, "Contenido copiado", Toast.LENGTH_SHORT).show()
+            }
+            .show()
+    }
+}
