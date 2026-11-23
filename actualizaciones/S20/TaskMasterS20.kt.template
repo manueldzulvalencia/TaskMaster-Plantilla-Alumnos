@@ -1,0 +1,327 @@
+package com.itcancun.mjdzul.taskmaster
+
+import android.app.Activity
+import android.app.AlertDialog
+import android.app.DatePickerDialog
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.content.Intent
+import android.graphics.Color
+import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
+import android.view.Gravity
+import android.view.View
+import android.view.ViewGroup
+import android.widget.*
+import org.json.JSONArray
+import org.json.JSONObject
+import java.util.Calendar
+import java.util.Locale
+
+/** S20: interfaz nativa sin dependencias nuevas. Las tareas viven SOLO en tareas.json. */
+class TaskMasterS20(private val host: Activity) {
+    private val repositorio = TareasRepository(host)
+    private val prefs = host.getSharedPreferences("tm20_preferencias", Context.MODE_PRIVATE)
+    private val nombreApp = host.getString(R.string.tm20_nombre_app)
+    private val giro = host.getString(R.string.tm20_giro)
+    private val publico = host.getString(R.string.tm20_publico)
+    private val tono: Int = Color.parseColor(host.getString(R.string.tm20_color))
+    private val azulOscuro = Color.rgb(20, 38, 68)
+    private val gris = Color.rgb(92, 104, 122)
+    private val fondo = Color.rgb(246, 248, 252)
+    private val categorias = host.resources.getStringArray(R.array.tm20_categorias).toList()
+    private val margen = dp(16)
+    private lateinit var raiz: FrameLayout
+    private lateinit var cuerpo: LinearLayout
+        private lateinit var barraInferior: LinearLayout
+    private val tareas: MutableList<Tarea> = mutableListOf()
+    private var pantalla = "Inicio"
+
+    private fun dp(n: Int) = (n * host.resources.displayMetrics.density).toInt()
+    private fun bg(color: Int, radio: Int = 16, borde: Int? = null) = GradientDrawable().apply {
+        shape = GradientDrawable.RECTANGLE
+        cornerRadius = dp(radio).toFloat()
+        setColor(color)
+        if (borde != null) setStroke(dp(1), borde)
+    }
+    private fun vertical() = LinearLayout(host).apply { orientation = LinearLayout.VERTICAL }
+    private fun horizontal() = LinearLayout(host).apply { orientation = LinearLayout.HORIZONTAL; gravity = Gravity.CENTER_VERTICAL }
+    private fun text(value: String, size: Float = 15f, color: Int = azulOscuro, bold: Boolean = false) = TextView(host).apply {
+        this.text = value
+        textSize = size
+        setTextColor(color)
+        if (bold) setTypeface(null, Typeface.BOLD)
+        gravity = Gravity.CENTER_VERTICAL
+    }
+    private fun LinearLayout.append(v: View, h: Int = -2) { addView(v, LinearLayout.LayoutParams(-1, h)) }
+    private fun gap(box: LinearLayout, n: Int = 12) { box.addView(View(host), LinearLayout.LayoutParams(1, dp(n))) }
+    private fun button(title: String, action: () -> Unit, filled: Boolean = true) = TextView(host).apply {
+        text = title; textSize = 14f; gravity = Gravity.CENTER; setTypeface(null, Typeface.BOLD)
+        setTextColor(if (filled) Color.WHITE else tono)
+        background = bg(if (filled) tono else Color.rgb(237, 244, 254), 12)
+        setPadding(dp(13), dp(12), dp(13), dp(12))
+        isClickable = true
+        setOnClickListener { action() }
+    }
+    private fun card() = vertical().apply { background = bg(Color.WHITE, 18); elevation = dp(2).toFloat(); setPadding(margen, margen, margen, margen) }
+    private fun rowCard(title: String, description: String, action: () -> Unit) = card().apply {
+        append(text(title, 17f, azulOscuro, true)); gap(this, 4)
+        append(text(description, 13f, gris)); gap(this, 8)
+        append(button("Ver detalle", action, false))
+    }
+    private fun contenido() = vertical().apply { setPadding(margen, margen, margen, dp(24)) }
+    private fun renderBase() {
+        raiz = host.findViewById(R.id.main)
+        raiz.removeAllViews()
+        val shell = vertical().apply { setBackgroundColor(fondo) }
+        raiz.addView(shell, FrameLayout.LayoutParams(-1, -1))
+        val cabecera = horizontal().apply { setBackgroundColor(tono); setPadding(dp(10), dp(9), dp(12), dp(9)) }
+        val menu = text("☰", 27f, Color.WHITE, true).apply { gravity = Gravity.CENTER; setPadding(dp(10), 0, dp(18), 0); setOnClickListener { mostrarMenu() } }
+        cabecera.addView(menu)
+        val nombre = text("☑  $nombreApp", 19f, Color.WHITE, true).apply { maxLines = 1; ellipsize = android.text.TextUtils.TruncateAt.END }
+        cabecera.addView(nombre, LinearLayout.LayoutParams(0, dp(49), 1f))
+        shell.append(cabecera)
+        val scrolling = ScrollView(host).apply { isFillViewport = true }
+        cuerpo = contenido(); scrolling.addView(cuerpo)
+        shell.addView(scrolling, LinearLayout.LayoutParams(-1, 0, 1f))
+        barraInferior = horizontal().apply { setBackgroundColor(Color.WHITE); setPadding(dp(4), dp(6), dp(4), dp(7)) }
+        shell.append(barraInferior)
+        actualizarBarra()
+    }
+    private fun actualizarBarra() {
+        barraInferior.removeAllViews()
+        listOf("⌂" to "Inicio", "☷" to "Mis tareas", "+" to "Nueva tarea", "▥" to "Estadísticas").forEach { (icono, destino) ->
+            val boton = vertical().apply { gravity = Gravity.CENTER; setPadding(0, dp(5), 0, dp(5)); isClickable = true }
+            boton.addView(text(icono, 23f, if (pantalla == destino) tono else gris, true).apply { gravity = Gravity.CENTER })
+            boton.addView(text(if (destino == "Mis tareas") "Tareas" else if (destino == "Nueva tarea") "Nueva" else destino, 10f, if (pantalla == destino) tono else gris).apply { gravity = Gravity.CENTER })
+            boton.setOnClickListener { navegar(destino) }
+            barraInferior.addView(boton, LinearLayout.LayoutParams(0, -2, 1f))
+        }
+    }
+    private fun refrescar() {
+        cuerpo.removeAllViews()
+        actualizarBarra()
+        when (pantalla) {
+            "Bienvenida" -> bienvenida()
+            "Inicio" -> inicio()
+            "Mis tareas" -> listado()
+            "Nueva tarea" -> nueva()
+        }
+    }
+    private fun navegar(destino: String) {
+        if (destino in listOf("Inicio", "Mis tareas", "Nueva tarea")) {
+            pantalla = destino; refrescar()
+        } else {
+            host.startActivity(Intent(host, EnConstruccionActivity::class.java).putExtra("seccion", destino))
+        }
+    }
+    private fun cargarDatos(): Boolean {
+        return try {
+            tareas.clear(); tareas.addAll(repositorio.cargar(host.resources.getStringArray(R.array.tareas_ejemplo_taskmaster_s12).toList()))
+            true
+        } catch (error: Exception) {
+            android.util.Log.e("TaskMasterS20", "Fallo leyendo JSON; no se reescribe", error)
+            AlertDialog.Builder(host).setTitle("Error en tareas.json")
+                .setMessage("El archivo existente no se ha modificado. Es necesario revisar los datos antes de continuar.")
+                .setPositiveButton("Entendido", null).show()
+            false
+        }
+    }
+    fun iniciar() {
+        if (!cargarDatos()) return
+        // SharedPreferences guarda preferencias de presentación, aparte de las tareas JSON.
+        prefs.edit().putString("nombre", nombreApp).putString("giro", giro)
+            .putString("color", host.getString(R.string.tm20_color)).apply()
+        if (!prefs.getBoolean("bienvenida_s20_vista", false)) pantalla = "Bienvenida"
+        renderBase(); refrescar()
+    }
+    private fun bienvenida() {
+        gap(cuerpo, 55)
+        cuerpo.append(text("☑", 64f, tono, true).apply { gravity = Gravity.CENTER })
+        gap(cuerpo, 14)
+        cuerpo.append(text("¡Bienvenido a $nombreApp!", 26f, tono, true).apply { gravity = Gravity.CENTER })
+        gap(cuerpo, 14)
+        cuerpo.append(text("Organiza tus pendientes de $giro.\nAplicación diseñada para: $publico", 16f, gris).apply { gravity = Gravity.CENTER })
+        gap(cuerpo, 35)
+        cuerpo.append(button("Comenzar", {
+            prefs.edit().putBoolean("bienvenida_s20_vista", true).apply()
+            navegar("Inicio")
+        }))
+    }
+    private fun inicio() {
+        cuerpo.append(text("¡Hola!", 26f, azulOscuro, true))
+        cuerpo.append(text("$nombreApp · $giro", 15f, gris)); gap(cuerpo, 16)
+        val resumen = card()
+        resumen.append(text("Tu productividad", 19f, azulOscuro, true)); gap(resumen)
+        resumen.append(text("${tareas.size} tareas    ·    ${tareas.count { it.prioridad == "Alta" }} prioridad alta", 16f, tono, true))
+        resumen.append(text("Para: $publico", 13f, gris)); gap(resumen, 12)
+        resumen.append(button("+ Crear una tarea", { navegar("Nueva tarea") }))
+        cuerpo.append(resumen); gap(cuerpo, 18)
+        cuerpo.append(text("Próximas tareas", 19f, azulOscuro, true)); gap(cuerpo)
+        if (tareas.isEmpty()) cuerpo.append(text("No tienes tareas. Usa «Nueva» para agregar una."))
+        tareas.take(3).forEach { tarea ->
+            cuerpo.append(rowCard(tarea.nombre, "${tarea.categoria} · ${tarea.fechaProgramada ?: "Sin fecha"}") { detalle(tarea) })
+            gap(cuerpo, 10)
+        }
+        cuerpo.append(button("Ver todas las tareas", { navegar("Mis tareas") }, false))
+    }
+    private fun listado() {
+        cuerpo.append(text("Mis tareas", 24f, azulOscuro, true)); gap(cuerpo)
+        val buscar = EditText(host).apply { hint = "Buscar tarea..."; setSingleLine(true); background = bg(Color.WHITE, 10); setPadding(dp(12), 0, dp(12), 0) }
+        cuerpo.append(buscar, dp(52)); gap(cuerpo)
+        val filtro = Spinner(host)
+        val filtros = listOf("Todas", "Alta", "Media", "Baja")
+        filtro.adapter = ArrayAdapter(host, android.R.layout.simple_spinner_dropdown_item, filtros)
+        cuerpo.append(filtro); gap(cuerpo)
+        val lista = vertical(); cuerpo.append(lista)
+        fun mostrar() {
+            lista.removeAllViews()
+            val filtradas = tareas.filter {
+                (filtro.selectedItemPosition <= 0 || it.prioridad == filtros[filtro.selectedItemPosition]) &&
+                    it.nombre.contains(buscar.text.toString(), ignoreCase = true)
+            }
+            if (filtradas.isEmpty()) lista.append(text("No hay tareas para este filtro."))
+            filtradas.forEach { tarea ->
+                val tar = card()
+                tar.append(text(tarea.nombre, 17f, azulOscuro, true))
+                tar.append(text("${tarea.categoria} · ${tarea.prioridad} · ${tarea.fechaProgramada ?: "Sin fecha"}", 12f, gris))
+                gap(tar, 10)
+                val acciones = horizontal()
+                val ver = button("Ver detalle", { detalle(tarea) }, false)
+                val quitar = button("Eliminar", { eliminar(tarea) }, false)
+                acciones.addView(ver, LinearLayout.LayoutParams(0, dp(45), 1f))
+                acciones.addView(View(host), LinearLayout.LayoutParams(dp(8), 1))
+                acciones.addView(quitar, LinearLayout.LayoutParams(0, dp(45), 1f))
+                tar.append(acciones)
+                lista.append(tar); gap(lista, 12)
+            }
+        }
+        buscar.addTextChangedListener(object : android.text.TextWatcher {
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) { mostrar() }
+            override fun afterTextChanged(s: android.text.Editable?) {}
+        })
+        filtro.onItemSelectedListener = object : android.widget.AdapterView.OnItemSelectedListener {
+            override fun onNothingSelected(parent: android.widget.AdapterView<*>?) {}
+            override fun onItemSelected(parent: android.widget.AdapterView<*>?, v: View?, pos: Int, id: Long) { mostrar() }
+        }
+        mostrar()
+    }
+    private fun nueva() {
+        cuerpo.append(text("Nueva tarea", 24f, azulOscuro, true)); gap(cuerpo)
+        val formulario = card()
+        fun etiqueta(valor: String) { formulario.append(text(valor, 14f, azulOscuro, true)); gap(formulario, 4) }
+        etiqueta("Nombre de la tarea *")
+        val titulo = EditText(host).apply { hint = "Ej. Preparar exposición"; setSingleLine(true) }
+        formulario.append(titulo); gap(formulario)
+        etiqueta("Categoría *")
+        val categoriasVista = Spinner(host).apply { adapter = ArrayAdapter(host, android.R.layout.simple_spinner_dropdown_item, categorias) }
+        formulario.append(categoriasVista); gap(formulario)
+        etiqueta("Prioridad *")
+        val prioridades = RadioGroup(host).apply { orientation = RadioGroup.HORIZONTAL }
+        listOf("Alta", "Media", "Baja").forEachIndexed { indice, p ->
+            prioridades.addView(RadioButton(host).apply { text = p; id = 2000 + indice; setTextColor(azulOscuro) })
+        }
+        prioridades.check(2001); formulario.append(prioridades); gap(formulario)
+        etiqueta("Fecha programada *")
+        var fecha: String? = null
+        val fechaBtn = button("Seleccionar fecha 📅", {}, false)
+        fechaBtn.setOnClickListener {
+            val cal = Calendar.getInstance()
+            DatePickerDialog(host, { _, year, month, day ->
+                fecha = String.format(Locale.US, "%04d-%02d-%02d", year, month + 1, day)
+                fechaBtn.text = "📅  Fecha: $fecha"
+            }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show()
+        }
+        formulario.append(fechaBtn, dp(48)); gap(formulario)
+        val importante = CheckBox(host).apply { text = "Marcar como importante"; setTextColor(azulOscuro) }
+        formulario.append(importante); gap(formulario, 16)
+        formulario.append(button("Guardar tarea", {
+            val nombre = titulo.text.toString().trim()
+            if (nombre.isBlank()) { titulo.error = "Escribe un nombre"; return@button }
+            if (fecha == null) { Toast.makeText(host, "Selecciona una fecha", Toast.LENGTH_SHORT).show(); return@button }
+            val prioridad = when (prioridades.checkedRadioButtonId) { 2000 -> "Alta"; 2002 -> "Baja"; else -> "Media" }
+            val nueva = Tarea(nombre = nombre, categoria = categoriasVista.selectedItem.toString(),
+                prioridad = prioridad, importante = importante.isChecked, fechaProgramada = fecha)
+            val siguiente = tareas.toMutableList().apply { add(nueva) }
+            try {
+                repositorio.guardar(siguiente)
+                tareas.clear(); tareas.addAll(siguiente)
+                Toast.makeText(host, "Tarea guardada correctamente", Toast.LENGTH_SHORT).show()
+                navegar("Mis tareas")
+            } catch (error: Exception) {
+                android.util.Log.e("TaskMasterS20", "Fallo guardando tarea", error)
+                Toast.makeText(host, "Error: la tarea no se guardó", Toast.LENGTH_LONG).show()
+            }
+        }))
+        cuerpo.append(formulario)
+    }
+    private fun detalle(tarea: Tarea) {
+        host.startActivity(Intent(host, DetalleActivity::class.java).apply {
+            putExtra(DetalleActivity.EXTRA_TAREA, tarea.textoLegado())
+            putExtra("tmpro_nombre", tarea.nombre)
+            putExtra("tmpro_categoria", tarea.categoria)
+            putExtra("tmpro_prioridad", tarea.prioridad)
+            putExtra("tmpro_importante", tarea.importante)
+            putExtra("tmpro_fecha", tarea.fechaProgramada ?: "")
+        })
+    }
+    private fun eliminar(tarea: Tarea) {
+        AlertDialog.Builder(host).setTitle("¿Eliminar tarea?")
+            .setMessage("Se eliminará «${tarea.nombre}» del listado y de tareas.json.")
+            .setNegativeButton("Cancelar", null)
+            .setPositiveButton("Eliminar") { _, _ ->
+                val actualizada = tareas.filter { it.id != tarea.id }
+                try {
+                    repositorio.guardar(actualizada)
+                    tareas.clear(); tareas.addAll(actualizada)
+                    Toast.makeText(host, "Tarea eliminada", Toast.LENGTH_SHORT).show()
+                    refrescar()
+                } catch (error: Exception) {
+                    android.util.Log.e("TaskMasterS20", "Fallo al eliminar", error)
+                    Toast.makeText(host, "Error: no se eliminó la tarea", Toast.LENGTH_LONG).show()
+                }
+            }.show()
+    }
+    private fun mostrarJson() {
+        val json = try {
+            val raw = host.openFileInput("tareas.json").bufferedReader(Charsets.UTF_8).use { it.readText() }
+            JSONObject(raw).toString(2)
+        } catch (error: Exception) { "No se pudo recuperar tareas.json: ${error.message}" }
+        val vista = TextView(host).apply { text = json; textSize = 12f; typeface = Typeface.MONOSPACE; setTextIsSelectable(true); setPadding(margen, margen, margen, margen) }
+        AlertDialog.Builder(host).setTitle("tareas.json · JSON v2")
+            .setView(ScrollView(host).apply { addView(vista) })
+            .setNegativeButton("Cerrar", null)
+            .setPositiveButton("Copiar JSON") { _, _ ->
+                val portapapeles = host.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                portapapeles.setPrimaryClip(ClipData.newPlainText("tareas.json", json))
+                Toast.makeText(host, "JSON copiado", Toast.LENGTH_SHORT).show()
+            }.show()
+    }
+    private fun mostrarMenu() {
+        val contenedor = FrameLayout(host).apply { setBackgroundColor(0x88000000.toInt()) }
+        val panel = vertical().apply { setBackgroundColor(Color.WHITE); setPadding(dp(12), dp(14), dp(12), dp(14)) }
+        val ancho = (host.resources.displayMetrics.widthPixels * 0.83f).toInt()
+        contenedor.addView(panel, FrameLayout.LayoutParams(ancho, -1, Gravity.START))
+        val fondoTap = View(host).apply { setOnClickListener { raiz.removeView(contenedor) } }
+        contenedor.addView(fondoTap, FrameLayout.LayoutParams(-1, -1))
+        contenedor.removeView(panel)
+        contenedor.addView(panel, FrameLayout.LayoutParams(ancho, -1, Gravity.START))
+        panel.append(text("☑  $nombreApp", 22f, tono, true)); gap(panel)
+        panel.append(text("$giro · $publico", 12f, gris)); gap(panel, 20)
+        listOf("Inicio", "Mis tareas", "Nueva tarea", "Ver JSON", "Categorías", "Calendario",
+            "Estadísticas", "Exportar datos", "Configuración", "Acerca de").forEach { destino ->
+            val item = text("   $destino", 16f, azulOscuro)
+            item.setPadding(dp(8), dp(13), dp(4), dp(13))
+            item.setOnClickListener {
+                raiz.removeView(contenedor)
+                if (destino == "Ver JSON") mostrarJson() else navegar(destino)
+            }
+            panel.append(item)
+        }
+        raiz.addView(contenedor, FrameLayout.LayoutParams(-1, -1))
+    }
+}
+
+fun Activity.configurarTaskMasterS20() = TaskMasterS20(this).iniciar()

@@ -1,0 +1,33 @@
+package com.itcancun.mjdzul.taskmaster
+
+import android.app.Activity
+import android.os.Bundle
+import android.graphics.Color
+import android.graphics.Typeface
+import android.view.Gravity
+import android.widget.*
+
+/** S20: destino único para módulos que el grupo implementará posteriormente. */
+class EnConstruccionActivity : Activity() {
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val seccion = intent.getStringExtra("seccion") ?: "Próxima función"
+        val contenedor = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            gravity = Gravity.CENTER
+            setPadding(32, 36, 32, 36)
+            setBackgroundColor(0xFFF6F8FC.toInt())
+        }
+        fun linea(texto: String, size: Float, negrita: Boolean = false): TextView = TextView(this).apply {
+            text = texto; textSize = size; gravity = Gravity.CENTER
+            setTextColor(0xFF153359.toInt())
+            if (negrita) setTypeface(null, Typeface.BOLD)
+            setPadding(5, 15, 5, 15)
+        }
+        contenedor.addView(linea("🚧", 60f))
+        contenedor.addView(linea("En construcción", 26f, true))
+        contenedor.addView(linea("$seccion estará disponible en una próxima sesión de TaskMaster Pro.", 16f))
+        contenedor.addView(Button(this).apply { text = "Volver"; setOnClickListener { finish() } })
+        setContentView(contenedor)
+    }
+}
