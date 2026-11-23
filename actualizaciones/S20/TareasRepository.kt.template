@@ -1,0 +1,65 @@
+package com.itcancun.mjdzul.taskmaster
+
+import android.content.Context
+import android.util.AtomicFile
+import android.util.Log
+import org.json.JSONArray
+import org.json.JSONObject
+import java.io.File
+
+/** Archivo privado tareas.json: esquema v2 con escritura atómica y migración segura. */
+class TareasRepository(private val context: Context) {
+    private val archivo: File get() = context.getFileStreamPath("tareas.json")
+    private val respaldoLegado: File get() = context.getFileStreamPath("tareas_s19_respaldo.json")
+    private val atomicFile: AtomicFile get() = AtomicFile(archivo)
+
+    /** Si la lectura falla, lanza excepción. Nunca reinicia ni borra datos corruptos. */
+    fun cargar(ejemplos: List<String>): MutableList<Tarea> {
+        if (!archivo.exists()) {
+            val iniciales = ejemplos.map(Tarea::desdeLegado).toMutableList()
+            guardar(iniciales) // Se crean UNA sola vez, incluso si después la lista queda vacía.
+            return iniciales
+        }
+        val texto = atomicFile.openRead().bufferedReader(Charsets.UTF_8).use { it.readText() }
+        val contenido = texto.trimStart()
+        if (contenido.startsWith("[")) {
+            val antiguo = JSONArray(texto)
+            val convertidas = MutableList(antiguo.length()) { indice ->
+                Tarea.desdeLegado(antiguo.getString(indice))
+            }
+            // Respaldo literal antes de escribir el nuevo esquema; abortar si no se puede crear.
+            if (!respaldoLegado.exists()) {
+                respaldoLegado.writeText(texto, Charsets.UTF_8)
+            }
+            guardar(convertidas)
+            Log.i("TaskMasterPro", "Migración segura: ${convertidas.size} tareas, esquema v2")
+            return convertidas
+        }
+        val raiz = JSONObject(texto)
+        require(raiz.getInt("version") == 2) { "Versión de datos no compatible" }
+        val arreglo = raiz.getJSONArray("tareas")
+        return MutableList(arreglo.length()) { indice -> Tarea.desdeJson(arreglo.getJSONObject(indice)) }
+    }
+
+    /** Escribir TODO el documento. Si falla, se conserva el último archivo válido. */
+    fun guardar(tareas: List<Tarea>) {
+        val ids = tareas.map { it.id }
+        require(ids.size == ids.toSet().size) { "Hay IDs de tareas duplicados" }
+        val lista = JSONArray()
+        tareas.forEach { lista.put(it.aJson()) }
+        val documento = JSONObject().apply {
+            put("version", 2)
+            put("tareas", lista)
+        }
+        val bytes = documento.toString(2).toByteArray(Charsets.UTF_8)
+        val output = atomicFile.startWrite()
+        try {
+            output.write(bytes)
+            atomicFile.finishWrite(output)
+        } catch (error: Exception) {
+            atomicFile.failWrite(output)
+            throw error
+        }
+        Log.d("TaskMasterPro", "Guardadas ${tareas.size} tareas, esquema v2")
+    }
+}
