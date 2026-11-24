@@ -1,0 +1,94 @@
+package com.itcancun.mjdzul.taskmaster
+
+import android.app.Activity
+import android.app.AlertDialog
+import android.content.Intent
+import android.os.Bundle
+import android.util.Log
+import android.widget.Toast
+import org.json.JSONObject
+
+/** S21: exportación de una COPIA de tareas.json mediante el selector de archivos de Android.
+ *  No modifica el archivo privado, no necesita permisos amplios de almacenamiento.
+ */
+class ExportarS21Activity : Activity() {
+    private val codigoCrearDocumento = 21021
+    private var solicitandoDocumento = false
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        solicitandoDocumento = savedInstanceState?.getBoolean("selector_abierto", false) ?: false
+        if (!solicitandoDocumento) abrirSelector()
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        outState.putBoolean("selector_abierto", solicitandoDocumento)
+        super.onSaveInstanceState(outState)
+    }
+
+    private fun abrirSelector() {
+        val nombre = getString(R.string.tm20_nombre_app)
+            .replace(Regex("[^\\p{L}\\p{N}_-]+"), "_")
+            .trim('_').ifBlank { "TaskMasterPro" }
+            .take(40)
+        val selector = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = "application/json"
+            putExtra(Intent.EXTRA_TITLE, "${nombre}_S21.json")
+        }
+        try {
+            solicitandoDocumento = true
+            @Suppress("DEPRECATION")
+            startActivityForResult(selector, codigoCrearDocumento)
+        } catch (error: Exception) {
+            solicitandoDocumento = false
+            Log.e("TaskMasterS21", "No se pudo abrir el selector de documentos", error)
+            Toast.makeText(this, "No se pudo abrir el selector de archivos", Toast.LENGTH_LONG).show()
+            finish()
+        }
+    }
+
+    @Deprecated("Compatibilidad con Activity sin dependencias externas")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode != codigoCrearDocumento) return
+        solicitandoDocumento = false
+        if (resultCode != RESULT_OK || data?.data == null) {
+            Toast.makeText(this, "Exportación cancelada; las tareas siguen intactas", Toast.LENGTH_SHORT).show()
+            finish()
+            return
+        }
+        try {
+            // Validar la fuente antes de crear la copia. Nunca ejecutar guardar() aquí.
+            val original = openFileInput("tareas.json").bufferedReader(Charsets.UTF_8)
+                .use { it.readText() }
+            val raiz = JSONObject(original)
+            require(raiz.getInt("version") == 2) { "Formato JSON incompatible" }
+            val total = raiz.getJSONArray("tareas").length()
+            val uri = requireNotNull(data?.data)
+            val salida = contentResolver.openOutputStream(uri, "wt")
+                ?: throw IllegalStateException("No se pudo escribir en el destino")
+            salida.use { stream ->
+                stream.write(original.toByteArray(Charsets.UTF_8))
+                stream.flush()
+            }
+            AlertDialog.Builder(this)
+                .setTitle("Respaldo exportado")
+                .setMessage("Se exportaron $total tareas en formato JSON. " +
+                    "El archivo original tareas.json permanece en la aplicación. " +
+                    "Puedes abrir la copia desde la ubicación elegida.")
+                .setPositiveButton("Entendido") { _, _ -> finish() }
+                .setOnCancelListener { finish() }
+                .show()
+        } catch (error: Exception) {
+            Log.e("TaskMasterS21", "Error al exportar JSON", error)
+            AlertDialog.Builder(this)
+                .setTitle("No se completó la exportación")
+                .setMessage("No se pudo crear una copia válida. Las tareas originales no se modificaron. " +
+                    "Detalle: ${error.message ?: "error desconocido"}")
+                .setPositiveButton("Cerrar") { _, _ -> finish() }
+                .setOnCancelListener { finish() }
+                .show()
+        }
+    }
+}
