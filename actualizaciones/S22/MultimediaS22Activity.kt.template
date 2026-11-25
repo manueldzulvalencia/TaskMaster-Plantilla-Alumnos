@@ -1,0 +1,257 @@
+package com.itcancun.mjdzul.taskmaster
+
+import android.app.Activity
+import android.graphics.Color
+import android.graphics.Typeface
+import android.graphics.drawable.GradientDrawable
+import android.media.MediaPlayer
+import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
+import android.view.Gravity
+import android.widget.Button
+import android.widget.LinearLayout
+import android.widget.ScrollView
+import android.widget.SeekBar
+import android.widget.TextView
+import android.widget.Toast
+
+/** S22 · Reproductor local. Contenido personalizado mediante recursos de la app. */
+class MultimediaS22Activity : Activity() {
+    private var player: MediaPlayer? = null
+    private enum class Estado { LISTO, REPRODUCIENDO, PAUSADO, DETENIDO }
+    private var estado = Estado.LISTO
+    private var posicionPausa = 0
+    private val handler = Handler(Looper.getMainLooper())
+    private lateinit var estadoTexto: TextView
+    private lateinit var progreso: SeekBar
+    private lateinit var tiempo: TextView
+    private var mostrarProgreso = false
+
+    private val tick = object : Runnable {
+        override fun run() {
+            val p = player
+            if (p != null && estado == Estado.REPRODUCIENDO) {
+                try {
+                    progreso.progress = p.currentPosition
+                    tiempo.text = "${formato(p.currentPosition)} / ${formato(p.duration)}"
+                } catch (_: IllegalStateException) {
+                    // El reproductor se puede liberar durante el cierre de la Activity.
+                }
+                handler.postDelayed(this, 250L)
+            } else {
+                mostrarProgreso = false
+            }
+        }
+    }
+
+    private fun dp(px: Int) = (px * resources.displayMetrics.density).toInt()
+
+    private fun fondo(color: Int, radio: Int = 16): GradientDrawable = GradientDrawable().apply {
+        setColor(color)
+        cornerRadius = dp(radio).toFloat()
+    }
+
+    private fun formato(ms: Int): String {
+        val s = (ms.coerceAtLeast(0) / 1000)
+        return "%02d:%02d".format(java.util.Locale.US, s / 60, s % 60)
+    }
+
+    private fun etiqueta(texto: String, tam: Float, color: Int, negrita: Boolean = false): TextView =
+        TextView(this).apply {
+            text = texto
+            textSize = tam
+            setTextColor(color)
+            gravity = Gravity.CENTER_HORIZONTAL
+            if (negrita) setTypeface(null, Typeface.BOLD)
+        }
+
+    private fun hueco(root: LinearLayout, size: Int) {
+        root.addView(TextView(this), LinearLayout.LayoutParams(1, dp(size)))
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        val tono = try { Color.parseColor(getString(R.string.tm20_color)) }
+            catch (_: Exception) { Color.rgb(104, 36, 196) }
+        val contraste = if ((Color.red(tono) * 299 + Color.green(tono) * 587 +
+                    Color.blue(tono) * 114) / 1000 >= 150) Color.BLACK else Color.WHITE
+        val oscuro = Color.rgb(20, 38, 68)
+        val root = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            setBackgroundColor(Color.rgb(246, 248, 252))
+            setPadding(dp(16), dp(20), dp(16), dp(16))
+        }
+        val scroll = ScrollView(this)
+        scroll.addView(root)
+        setContentView(scroll)
+        val header = LinearLayout(this).apply {
+            orientation = LinearLayout.VERTICAL
+            background = fondo(tono)
+            setPadding(dp(16), dp(18), dp(16), dp(18))
+        }
+        header.addView(etiqueta(getString(R.string.tm20_nombre_app), 15f, contraste))
+        hueco(header, 6)
+        header.addView(etiqueta(getString(R.string.tm22_titulo), 23f, contraste, true))
+        hueco(header, 6)
+        header.addView(etiqueta("♫  Audio de demostración", 16f, contraste))
+        root.addView(header, LinearLayout.LayoutParams(-1, -2))
+        hueco(root, 18)
+        val mensaje = etiqueta(getString(R.string.tm22_mensaje), 16f, oscuro)
+        root.addView(mensaje)
+        hueco(root, 10)
+        root.addView(etiqueta("Propósito: ${getString(R.string.tm22_proposito)}", 13f, oscuro))
+        hueco(root, 12)
+        root.addView(etiqueta("Audio instrumental de prueba (mismo sonido para todos)", 12f, Color.DKGRAY))
+        if (resources.getBoolean(R.bool.tm22_mostrar_indicaciones)) {
+            hueco(root, 12)
+            root.addView(etiqueta("Reproducir inicia · Pausar conserva posición · " +
+                "Reanudar continúa · Detener vuelve al inicio", 13f, oscuro))
+        }
+        hueco(root, 20)
+        estadoTexto = etiqueta("Listo para reproducir", 17f, oscuro, true)
+        root.addView(estadoTexto)
+        hueco(root, 10)
+        progreso = SeekBar(this).apply {
+            isEnabled = false
+            progress = 0
+        }
+        root.addView(progreso)
+        tiempo = etiqueta("00:00 / 00:12", 12f, oscuro)
+        root.addView(tiempo)
+        hueco(root, 12)
+        val controles = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL }
+        val grupo1 = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        val grupo2 = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
+        fun boton(texto: String, group: LinearLayout, accion: () -> Unit) {
+            val button = Button(this).apply {
+                text = texto
+                isAllCaps = false
+                setTextColor(contraste)
+                background = fondo(tono, 12)
+                setOnClickListener { accion() }
+            }
+            group.addView(button, LinearLayout.LayoutParams(0, dp(55), 1f).apply {
+                setMargins(dp(3), dp(3), dp(3), dp(3))
+            })
+        }
+        boton("▶ Reproducir", grupo1) { reproducir(inicio = true) }
+        boton("Ⅱ Pausar", grupo1) { pausar() }
+        boton("▷ Reanudar", grupo2) { reanudar() }
+        boton("■ Detener", grupo2) { detener() }
+        controles.addView(grupo1)
+        controles.addView(grupo2)
+        root.addView(controles)
+        hueco(root, 14)
+        root.addView(etiqueta("Volver a tareas", 15f, tono, true).apply {
+            setPadding(0, dp(10), 0, dp(10))
+            setOnClickListener { finish() }
+        })
+    }
+
+    private fun nuevoReproductor(): Boolean {
+        return try {
+            player?.release()
+            player = MediaPlayer.create(this, R.raw.tm22_audio_demo)
+                ?: throw IllegalStateException("No se pudo abrir el audio local")
+            val p = requireNotNull(player)
+            p.setOnCompletionListener {
+                estado = Estado.DETENIDO
+                posicionPausa = 0
+                handler.removeCallbacks(tick)
+                progreso.progress = 0
+                tiempo.text = "00:00 / ${formato(p.duration)}"
+                estadoTexto.text = "Audio terminado. Puedes reproducirlo nuevamente."
+            }
+            progreso.max = p.duration
+            tiempo.text = "00:00 / ${formato(p.duration)}"
+            estado = Estado.LISTO
+            true
+        } catch (error: Exception) {
+            Log.e("TaskMasterS22", "No se pudo preparar audio", error)
+            Toast.makeText(this, "Error al preparar el audio", Toast.LENGTH_LONG).show()
+            false
+        }
+    }
+
+    private fun comenzarSeguimiento() {
+        handler.removeCallbacks(tick)
+        mostrarProgreso = true
+        handler.post(tick)
+    }
+
+    private fun reproducir(inicio: Boolean) {
+        if (inicio) {
+            handler.removeCallbacks(tick)
+            player?.release()
+            player = null
+            posicionPausa = 0
+            if (!nuevoReproductor()) return
+        } else if (player == null && !nuevoReproductor()) return
+        try {
+            val p = requireNotNull(player)
+            p.start()
+            estado = Estado.REPRODUCIENDO
+            estadoTexto.text = "Reproduciendo audio..."
+            comenzarSeguimiento()
+        } catch (error: Exception) {
+            Log.e("TaskMasterS22", "Error de reproducción", error)
+            Toast.makeText(this, "No se pudo reproducir", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun pausar() {
+        if (estado != Estado.REPRODUCIENDO) {
+            Toast.makeText(this, "Primero reproduce el audio", Toast.LENGTH_SHORT).show()
+            return
+        }
+        try {
+            player?.pause()
+            posicionPausa = player?.currentPosition ?: 0
+            estado = Estado.PAUSADO
+            estadoTexto.text = "Pausado en ${formato(posicionPausa)}"
+            handler.removeCallbacks(tick)
+        } catch (error: Exception) {
+            Log.e("TaskMasterS22", "No se pudo pausar", error)
+        }
+    }
+
+    private fun reanudar() {
+        if (estado != Estado.PAUSADO) {
+            Toast.makeText(this, "Primero pausa el audio", Toast.LENGTH_SHORT).show()
+            return
+        }
+        reproducir(inicio = false)
+    }
+
+    private fun detener() {
+        handler.removeCallbacks(tick)
+        try { player?.stop() }
+        catch (_: IllegalStateException) { /* Si ya terminó no requiere stop. */ }
+        player?.release()
+        player = null
+        posicionPausa = 0
+        estado = Estado.DETENIDO
+        progreso.progress = 0
+        tiempo.text = "00:00 / 00:12"
+        estadoTexto.text = "Detenido. Reproducir comienza desde el principio."
+    }
+
+    override fun onStop() {
+        // Evita que el audio continúe si el alumno abandona la pantalla.
+        handler.removeCallbacks(tick)
+        player?.release()
+        player = null
+        posicionPausa = 0
+        estado = Estado.LISTO
+        super.onStop()
+    }
+
+    override fun onDestroy() {
+        handler.removeCallbacks(tick)
+        player?.release()
+        player = null
+        super.onDestroy()
+    }
+}
